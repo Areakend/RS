@@ -10,6 +10,7 @@ void cut_buffer(char* buffer)
     int i = 0, i2 = 0, i3 = 0;
     for(i=0;i<strlen(token);i++)
     {
+    printf(token);
         switch(token[i])
         {
             case ' ':
