@@ -11,9 +11,13 @@
 // variable globale
 char buffer[64];
 char* every_word[64];
+char currentDir[128];
+
 
 // cut_buffer.c
 void cut_buffer(char* buffer);
+
+void displayUserPath();
 
 
 #endif

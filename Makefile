@@ -7,7 +7,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra
 EXEC = project
-LDFLAGS = #-lSDL -lSDLmain -lSDL_mixer
+LDFLAGS =
 
 
 all : clean $(EXEC)

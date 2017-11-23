@@ -44,10 +44,37 @@ void execPrgm(){
     }
 }
 
+void displayUserPath() {
+ char *parsing = NULL;
+ char tmpDir[128];
+ char tmpDir2[128];
+ int parseRange = 2, i, b = 0;
+ getcwd(tmpDir, sizeof(tmpDir));
+ parsing = strtok(getcwd(tmpDir2, sizeof(tmpDir2)),"/");
+
+ while (strcmp(parsing,getenv("USER"))) {
+   parsing = strtok(NULL,"/");
+   parseRange++;
+ }
+
+ for (i = 0; i < strlen(tmpDir);i++) {
+   if (tmpDir[i] == '/' && b < parseRange) {
+     b++;
+   }
+   if (b == parseRange) {
+     memcpy(currentDir, &tmpDir[i], &tmpDir[strlen(tmpDir)]- &tmpDir[i]);
+     b++;
+   }
+ }
+
+ printf("%s",currentDir);
+
+}
+
 int main() {
 	char buffer[64];
+  displayUserPath();
 	while(1){
-		printf("Wainting command : ");
 		if(!fgets(buffer,sizeof(buffer)-1,stdin)){
 	        printf("\n");
     	    exit(0);
@@ -74,9 +101,8 @@ int main() {
 		}
 		else{
 */
-			//cut_buffer(buffer);
-			//execPrgm();
-      printf("HELLOWORLD!");
+			cut_buffer(buffer);
+			execPrgm();
 //		}
 	}
 }
