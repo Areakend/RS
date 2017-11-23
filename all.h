@@ -12,10 +12,6 @@
 char buffer[64];
 char* every_word[64];
 
-
-// main.c
-int main();
-
 // cut_buffer.c
 void cut_buffer(char* buffer);
 

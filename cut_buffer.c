@@ -6,8 +6,9 @@ void cut_buffer(char* buffer)
     char oneword[20];
     // On stocke la saisie utilisateur
     char *token = buffer;
-    // Index des différents tableau
+    // Index des différents tableaux
     int i = 0, i2 = 0, i3 = 0;
+
     for(i=0;i<strlen(token);i++)
     {
     printf(token);
@@ -21,7 +22,7 @@ void cut_buffer(char* buffer)
                     i2=i2+1;
                 };
                 break;
- 
+
             case '\0':
                 {
                     // On supprimme les \0
@@ -30,7 +31,7 @@ void cut_buffer(char* buffer)
                     i2=i2+1;
                 };
                 break;
- 
+
             case '\n':
                 {
                     // On supprimme les \n

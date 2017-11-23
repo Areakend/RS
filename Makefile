@@ -6,13 +6,14 @@
 
 CC = gcc
 CFLAGS = -Wall -Wextra
-LDFLAGS = -lSDL -lSDLmain -lSDL_mixer
 EXEC = project
+LDFLAGS = #-lSDL -lSDLmain -lSDL_mixer
+
 
 all : clean $(EXEC)
 	./$(EXEC)
 
-$(EXEC) : debut.o cut_buffer.o
+$(EXEC) : tesh.o cut_buffer.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o : %.c
