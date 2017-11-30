@@ -11,7 +11,6 @@ void cut_buffer(char* buffer)
 
     for(i=0;i<strlen(token);i++)
     {
-    printf(token);
         switch(token[i])
         {
             case ' ':
@@ -53,3 +52,40 @@ void cut_buffer(char* buffer)
     }
     every_word[i2] = NULL;
 }
+
+
+/*void inputParser(char *buffer) {
+  char *buff = &buffer;
+  char token[MAX_ARGS_SIZE];
+
+  //Avancée dans le buffer
+  int i;
+  //Avancée dans le mot en cours
+  int i2 = 0;
+  //Avancée dans l'index de tableaux de mots
+  int i3 = 0;
+
+  for(i = 0; i < strlen(*buff); i++) {
+    switch (*buff[i]) {
+    case ' ':
+        token[i2] = '\0'
+        every_word[i3][] = *token;
+        token = NULL;
+        i2 = 0;
+        i3++;
+      break;
+    case '\n':
+      break;
+    case '\0':
+      break;
+    default:
+      {
+        token[i2] = *(buff);
+        i2++;
+      }
+      break;
+    }
+    i++;
+  }
+}
+*/

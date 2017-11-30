@@ -8,10 +8,18 @@
 #ifndef ALL_H
 #define ALL_H
 
-// variable globale
+// Variable Globale
 char buffer[64];
 char* every_word[64];
 char currentDir[128];
+
+/*#define MAX_ARGS 16
+#define MAX_ARGS_SIZE 64
+
+// Variable Globale
+char buffer[64];
+char every_word[MAX_ARGS][MAX_ARGS_SIZE];
+char currentDir[128];*/
 
 
 // cut_buffer.c

@@ -9,7 +9,6 @@ CFLAGS = -Wall -Wextra
 EXEC = project
 LDFLAGS =
 
-
 all : clean $(EXEC)
 	./$(EXEC)
 
