@@ -24,6 +24,9 @@ void WaitProcess(pid_t pid)
 void execPrgm(){
     pid_t pid;
     pid = fork();
+    char command4[64];
+    //printf("%s \n", command);
+    
 
     //Cas des erreurs
     if(pid < 0){
@@ -79,5 +82,6 @@ int main() {
    	 }
 		 cut_buffer(buffer);
      execPrgm();
+     displayUserPath();
 	}
 }
