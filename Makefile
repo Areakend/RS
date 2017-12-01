@@ -5,7 +5,7 @@
 
 
 CC = gcc
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wextra
 EXEC = project
 LDFLAGS =
 

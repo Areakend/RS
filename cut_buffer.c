@@ -1,6 +1,6 @@
 #include "all.h"
 
-void cut_buffer(char* buffer)
+/*void cut_buffer(char* buffer)
 {
     // Servira à stocker chaque mot de la saisie utilisateur
     char oneword[20];
@@ -52,11 +52,14 @@ void cut_buffer(char* buffer)
     }
     every_word[i2] = NULL;
 }
+*/
 
+void inputParser(char *buffer) {
+  char *token;
+  token = malloc(MAX_ARGS_SIZE * sizeof(char));
+  int spaceOffset = preprocessing(buffer);
 
-/*void inputParser(char *buffer) {
-  char *buff = &buffer;
-  char token[MAX_ARGS_SIZE];
+  char *buff = buffer + spaceOffset;
 
   //Avancée dans le buffer
   int i;
@@ -65,27 +68,36 @@ void cut_buffer(char* buffer)
   //Avancée dans l'index de tableaux de mots
   int i3 = 0;
 
-  for(i = 0; i < strlen(*buff); i++) {
-    switch (*buff[i]) {
+  for(i = 0; i < strlen(buff)+1; i++) {
+    switch (buff[i]) {
+    case '\0':
     case ' ':
-        token[i2] = '\0'
-        every_word[i3][] = *token;
-        token = NULL;
-        i2 = 0;
-        i3++;
+    {
+      token[i2] = '\0';
+      every_word[i3] = malloc(sizeof(token));
+      strcpy(every_word[i3],token);
+      free(token);
+      token = malloc(MAX_ARGS_SIZE * sizeof(char));
+      i2 = 0;
+      i3++;
+    }
       break;
     case '\n':
       break;
-    case '\0':
-      break;
     default:
       {
-        token[i2] = *(buff);
+        token[i2] = buff[i];
         i2++;
       }
-      break;
     }
+  }
+
+}
+
+int preprocessing(char *buffer) {
+  int i = 0;
+  while(buffer[i] == ' ') {
     i++;
   }
+  return i;
 }
-*/
