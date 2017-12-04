@@ -16,18 +16,10 @@ char buffer[64];
 char* every_word[MAX_ARGS];
 char currentDir[128];
 
-
-/*
-// Variable Globale
-char buffer[64];
-char every_word[MAX_ARGS][MAX_ARGS_SIZE];
-char currentDir[128];*/
-
-
-// cut_buffer.c
 void inputParser(char* buffer);
 int preprocessing(char *buffer);
-//void cut_buffer(char* buffer);
+void execCD();
+void clearTab();
 
 void displayUserPath();
 

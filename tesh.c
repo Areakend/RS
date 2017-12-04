@@ -18,20 +18,9 @@ void WaitProcess(pid_t pid)
     }
 }
 
-
-/*void clearBuffer() {
-  int i;
-  for(i=0;i<MAX_ARGS;i++) {
-    free(every_word[i]);
-  }
-}*/
-
 void execPrgm(){
-    //clearBuffer();
     pid_t pid;
     pid = fork();
-    //char command4[64];
-    //printf("%s \n", command);
 
     //Cas des erreurs
     if(pid < 0){
@@ -39,7 +28,16 @@ void execPrgm(){
     }
 
     if(pid==0){
-        execvp(every_word[0],every_word); // The first word is the command, then it's the arguments
+        if (strcmp(every_word[0],"cd") == 0) {
+          execCD();
+          exit(0);
+        } else if (strcmp(every_word[0],"pwd") == 0) {
+          printf("todo");
+          exit(0);
+        } else {
+          execvp(every_word[0],every_word);
+        }
+         // The first word is the command, then it's the arguments
         // If failed to execute
         printf("Can't execute \n");
         exit(1);
@@ -48,6 +46,22 @@ void execPrgm(){
     {
         WaitProcess(pid);
     }
+}
+
+void execCD() {
+  char tmpDir[128];
+  if (strcmp(every_word[1],".") == 0) {
+      getcwd(tmpDir, sizeof(tmpDir));
+      chdir(tmpDir);
+  } else if (strcmp(every_word[1],"..") == 0) {
+      chdir("/home");
+  } else if (strcmp(every_word[1],"~") == 0){
+
+  } else if (strcmp(every_word[1],"-") == 0) {
+
+  } else {
+    chdir(every_word[1]);
+  }
 }
 
 void displayUserPath() {
@@ -79,6 +93,61 @@ void displayUserPath() {
 
 }
 
+void clearTab() {
+  int i;
+  for (i=0;i<MAX_ARGS;i++) {
+    every_word[i] = NULL;
+  }
+}
+
+void inputParser(char *buffer) {
+  char *token;
+  token = malloc(MAX_ARGS_SIZE * sizeof(char));
+  int spaceOffset = preprocessing(buffer);
+
+  char *buff = buffer + spaceOffset;
+
+  //Avancée dans le buffer
+  int i;
+  //Avancée dans le mot en cours
+  int i2 = 0;
+  //Avancée dans l'index de tableaux de mots
+  int i3 = 0;
+
+  for(i = 0; i < strlen(buff)+1; i++) {
+    switch (buff[i]) {
+    case '\0':
+    case ' ':
+    {
+      token[i2] = '\0';
+      every_word[i3] = malloc(sizeof(token));
+      strcpy(every_word[i3],token);
+      free(token);
+      token = malloc(MAX_ARGS_SIZE * sizeof(char));
+      i2 = 0;
+      i3++;
+    }
+      break;
+    case '\n':
+      break;
+    default:
+      {
+        token[i2] = buff[i];
+        i2++;
+      }
+    }
+  }
+
+}
+
+int preprocessing(char *buffer) {
+  int i = 0;
+  while(buffer[i] == ' ') {
+    i++;
+  }
+  return i;
+}
+
 int main(int argc, char *argv[]) {
 	char buffer[MAX_INPUT_SIZE];
 
@@ -88,8 +157,8 @@ int main(int argc, char *argv[]) {
 	      printf("\n");
         exit(0);
    	 }
+     clearTab();
      inputParser(buffer);
-		 //cut_buffer(buffer);
      execPrgm();
      displayUserPath();
   }
