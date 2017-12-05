@@ -21,19 +21,18 @@ void WaitProcess(pid_t pid)
 void execPrgm(){
     pid_t pid;
     pid = fork();
-
+ 	char tmpDir[128];
     //Cas des erreurs
     if(pid < 0){
       return;
     }
 
     if(pid==0){
-        if (strcmp(every_word[0],"cd") == 0) {
-          execCD();
-          exit(0);
-        } else if (strcmp(every_word[0],"pwd") == 0) {
-          printf("todo");
-          exit(0);
+		if (strcmp(every_word[0],"pwd") == 0) {
+			getcwd(tmpDir, sizeof(tmpDir));
+         	printf("%s\n",tmpDir);
+        	exit(0);
+          
         } else {
           execvp(every_word[0],every_word);
         }
@@ -49,19 +48,26 @@ void execPrgm(){
 }
 
 void execCD() {
-  char tmpDir[128];
-  if (strcmp(every_word[1],".") == 0) {
-      getcwd(tmpDir, sizeof(tmpDir));
-      chdir(tmpDir);
-  } else if (strcmp(every_word[1],"..") == 0) {
-      chdir("/home");
-  } else if (strcmp(every_word[1],"~") == 0){
-
-  } else if (strcmp(every_word[1],"-") == 0) {
-
-  } else {
-    chdir(every_word[1]);
-  }
+	char user[128];
+	char tmpDir[128];
+	char tmpDir2[128];
+	char temp[10];
+	strcpy(tmpDir,"/home");
+	strcpy(temp,"/");
+	if (strcmp(every_word[1],"~")==0) {
+		strcpy(user, getenv("USER"));
+		strcat(tmpDir,temp);
+		strcat(tmpDir,user);
+		chdir(tmpDir);
+	}
+	else {
+		getcwd(tmpDir, sizeof(tmpDir));
+		chdir(every_word[1]);
+		getcwd(tmpDir2, sizeof(tmpDir2));
+		if (strcmp(tmpDir,tmpDir2)==0) {
+			printf("Folder %s not found\n",every_word[1]);
+		}
+	}
 }
 
 void displayUserPath() {
@@ -92,6 +98,7 @@ void displayUserPath() {
  printf("%s@%s:~%s$ ",getenv("USER"),hostname,currentDir);
 
 }
+
 
 void clearTab() {
   int i;
@@ -159,7 +166,16 @@ int main(int argc, char *argv[]) {
    	 }
      clearTab();
      inputParser(buffer);
-     execPrgm();
+     if (strcmp(every_word[0],"cd") == 0) {
+     	execCD();
+     	strcpy(currentDir, " ");
+     }
+     else if (strcmp(every_word[0],"exit") == 0) {
+     	exit(0);
+     }
+     else {
+     	execPrgm();
+     }
      displayUserPath();
   }
 }
