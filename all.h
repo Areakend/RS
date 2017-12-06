@@ -14,7 +14,7 @@
 // Variable Globale
 char buffer[64];
 char* every_word[MAX_ARGS];
-char currentDir[128];
+int indexOfPipe[32];
 
 void inputParser(char* buffer);
 int preprocessing(char *buffer);

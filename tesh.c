@@ -35,6 +35,19 @@ char *file() {
 	return(inFile);
 }
 
+int checkPipe() {
+  int i = 0;
+  int nbrOfPipe = 0;
+  while (every_word[i]!=NULL) {
+	   if (strcmp(every_word[i],"|")==0) {
+       indexOfPipe[nbrOfPipe] = i;
+       nbrOfPipe++;
+     }
+     i++;
+   }
+   return nbrOfPipe;
+}
+
 void execPrgm(){
     char *fichier = file();
     pid_t pid;
@@ -46,6 +59,7 @@ void execPrgm(){
     }
 
     if(pid==0){
+
     	if (fichier != NULL) {
   	    int redirect = (int)freopen(fichier, "w", stdout);
     		if (redirect == -1) {
@@ -79,6 +93,7 @@ void execRedirect() {
 
 
 }
+
 void execCD() {
 	char user[128];
 	char tmpDir[128];
@@ -101,6 +116,7 @@ void execCD() {
 		}
 	}
 }
+
 void execPWD() {
   char tmpDir[128];
   getcwd(tmpDir, sizeof(tmpDir));
@@ -115,7 +131,6 @@ void displayUserPath() {
   getcwd(tmpDir, sizeof(tmpDir));
   printf("%s@%s:~%s$ ",getenv("USER"),hostname,tmpDir+len);
 }
-
 
 void clearTab() {
   int i;
@@ -182,7 +197,6 @@ int main(int argc, char *argv[]) {
    	 }
      clearTab();
      inputParser(buffer);
-     printf("%s\n", getenv("HOME"));
 
      if (strcmp(every_word[0],"") != 0) { //Si Non Entrée sans rien
        if (strcmp(every_word[0],"cd") == 0) {
@@ -192,10 +206,10 @@ int main(int argc, char *argv[]) {
          execPWD();
        }
        else if (strcmp(every_word[0],"exit") == 0) {
-       	exit(0);
+         exit(0);
        }
        else {
-       	execPrgm();
+         execPrgm();
        }
      }
      displayUserPath();
