@@ -19,6 +19,8 @@ char currentDir[128];
 void inputParser(char* buffer);
 int preprocessing(char *buffer);
 void execCD();
+void execPWD();
+void execRedirect();
 void clearTab();
 
 void displayUserPath();

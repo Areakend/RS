@@ -18,13 +18,13 @@ void WaitProcess(pid_t pid)
     }
 }
 
-char *file() {	
+char *file() {
 	int i=0;
 	char *inFile=NULL;
 	while (every_word[i]!=NULL) {
 		if (strcmp(every_word[i],">")==0) {
 			inFile = every_word[i+1];
-			while (every_word[i+2]!=NULL) {	
+			while (every_word[i+2]!=NULL) {
 				every_word[i] = every_word[i+2];
 				i++;
 			}
@@ -39,7 +39,7 @@ void execPrgm(){
     char *fichier = file();
     pid_t pid;
     pid = fork();
- 	char tmpDir[128];
+
     //Cas des erreurs
     if(pid < 0){
       return;
@@ -47,25 +47,15 @@ void execPrgm(){
 
     if(pid==0){
     	if (fichier != NULL) {
-    	    int redirect = (int)freopen(fichier, "w", stdout);
-  	  		if (redirect == -1) {
-  		  		printf("Error file\n");
-  		  		exit(0);
-   		 	}
-   		 }
-   		 
-		if (strcmp(every_word[0],"pwd") == 0) {
-			getcwd(tmpDir, sizeof(tmpDir));
-         	printf("%s\n",tmpDir);
-        	exit(0);
-          
-        } else {
-          execvp(every_word[0],every_word);
-        }
-         // The first word is the command, then it's the arguments
-        // If failed to execute
-        printf("Can't execute \n");
-        exit(0);
+  	    int redirect = (int)freopen(fichier, "w", stdout);
+    		if (redirect == -1) {
+      		printf("Error file\n");
+      		exit(0);
+  	    }
+   		}
+      execvp(every_word[0],every_word);
+      printf("Can't execute \n");
+      exit(0);
     }
     else
     {
@@ -75,7 +65,7 @@ void execPrgm(){
 
 void execRedirect() {
     char *fichier = file();
-	pid_t pid;
+	  pid_t pid;
     pid = fork();
     //Cas des erreurs
     if(pid < 0){
@@ -86,8 +76,8 @@ void execRedirect() {
     	printf("Error file\n");
     	exit(0);
     }
-    
-    
+
+
 }
 void execCD() {
 	char user[128];
@@ -111,34 +101,19 @@ void execCD() {
 		}
 	}
 }
+void execPWD() {
+  char tmpDir[128];
+  getcwd(tmpDir, sizeof(tmpDir));
+  printf("%s\n",tmpDir);
+}
 
 void displayUserPath() {
- char *parsing = NULL;
- char tmpDir[128];
- char tmpDir2[128];
- char hostname[64];
- int parseRange = 2, i, b = 0;
- getcwd(tmpDir, sizeof(tmpDir));
- parsing = strtok(getcwd(tmpDir2, sizeof(tmpDir2)),"/");
-
- while (strcmp(parsing,getenv("USER"))) {
-   parsing = strtok(NULL,"/");
-   parseRange++;
- }
-
- for (i = 0; i < strlen(tmpDir);i++) {
-   if (tmpDir[i] == '/' && b < parseRange) {
-     b++;
-   }
-   if (b == parseRange) {
-     memcpy(currentDir, &tmpDir[i], &tmpDir[strlen(tmpDir)]- &tmpDir[i]);
-     b++;
-   }
- }
-
- gethostname(hostname,sizeof(hostname));
- printf("%s@%s:~%s$ ",getenv("USER"),hostname,currentDir);
-
+  int len = strlen(getenv("HOME"));
+  char tmpDir[128];
+  char hostname[64];
+  gethostname(hostname,sizeof(hostname));
+  getcwd(tmpDir, sizeof(tmpDir));
+  printf("%s@%s:~%s$ ",getenv("USER"),hostname,tmpDir+len);
 }
 
 
@@ -207,22 +182,21 @@ int main(int argc, char *argv[]) {
    	 }
      clearTab();
      inputParser(buffer);
-  /*   while (every_word[j]!=NULL) {
-		if (strcmp(every_word[j],">")==0) {
-			i=1;
-		}
-	} */
-     if (strcmp(every_word[0],"cd") == 0) {
-     	execCD();
-     	strcpy(currentDir, " ");
-     }
-     else if (strcmp(every_word[0],"exit") == 0) {
-     	exit(0);
-     }
- /*    else if (i==1) {
-     	execRedirect(); */
-     else {
-     	execPrgm();
+     printf("%s\n", getenv("HOME"));
+
+     if (strcmp(every_word[0],"") != 0) { //Si Non Entrée sans rien
+       if (strcmp(every_word[0],"cd") == 0) {
+         execCD();
+       }
+       else if (strcmp(every_word[0],"pwd") == 0) {
+         execPWD();
+       }
+       else if (strcmp(every_word[0],"exit") == 0) {
+       	exit(0);
+       }
+       else {
+       	execPrgm();
+       }
      }
      displayUserPath();
   }
