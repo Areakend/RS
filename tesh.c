@@ -18,7 +18,25 @@ void WaitProcess(pid_t pid)
     }
 }
 
+char *file() {	
+	int i=0;
+	char *inFile=NULL;
+	while (every_word[i]!=NULL) {
+		if (strcmp(every_word[i],">")==0) {
+			inFile = every_word[i+1];
+			while (every_word[i+2]!=NULL) {	
+				every_word[i] = every_word[i+2];
+				i++;
+			}
+			every_word[i]=NULL;
+		}
+		i++;
+	}
+	return(inFile);
+}
+
 void execPrgm(){
+    char *fichier = file();
     pid_t pid;
     pid = fork();
  	char tmpDir[128];
@@ -28,6 +46,14 @@ void execPrgm(){
     }
 
     if(pid==0){
+    	if (fichier != NULL) {
+    	    int redirect = (int)freopen(fichier, "w", stdout);
+  	  		if (redirect == -1) {
+  		  		printf("Error file\n");
+  		  		exit(0);
+   		 	}
+   		 }
+   		 
 		if (strcmp(every_word[0],"pwd") == 0) {
 			getcwd(tmpDir, sizeof(tmpDir));
          	printf("%s\n",tmpDir);
@@ -39,7 +65,7 @@ void execPrgm(){
          // The first word is the command, then it's the arguments
         // If failed to execute
         printf("Can't execute \n");
-        exit(1);
+        exit(0);
     }
     else
     {
@@ -47,6 +73,22 @@ void execPrgm(){
     }
 }
 
+void execRedirect() {
+    char *fichier = file();
+	pid_t pid;
+    pid = fork();
+    //Cas des erreurs
+    if(pid < 0){
+      return;
+    }
+    int redirect = (int)freopen(fichier, "w", stdout);
+    if (redirect == -1) {
+    	printf("Error file\n");
+    	exit(0);
+    }
+    
+    
+}
 void execCD() {
 	char user[128];
 	char tmpDir[128];
@@ -157,8 +199,7 @@ int preprocessing(char *buffer) {
 
 int main(int argc, char *argv[]) {
 	char buffer[MAX_INPUT_SIZE];
-
-  displayUserPath();
+	displayUserPath();
 	while(1){
 	   if(!fgets(buffer,sizeof(buffer)-1,stdin)){
 	      printf("\n");
@@ -166,6 +207,11 @@ int main(int argc, char *argv[]) {
    	 }
      clearTab();
      inputParser(buffer);
+  /*   while (every_word[j]!=NULL) {
+		if (strcmp(every_word[j],">")==0) {
+			i=1;
+		}
+	} */
      if (strcmp(every_word[0],"cd") == 0) {
      	execCD();
      	strcpy(currentDir, " ");
@@ -173,6 +219,8 @@ int main(int argc, char *argv[]) {
      else if (strcmp(every_word[0],"exit") == 0) {
      	exit(0);
      }
+ /*    else if (i==1) {
+     	execRedirect(); */
      else {
      	execPrgm();
      }
