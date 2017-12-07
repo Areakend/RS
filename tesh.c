@@ -18,6 +18,24 @@ void WaitProcess(pid_t pid)
     }
 }
 
+char *commandAfterV() {
+	int i=0;
+	char *inFile=NULL;
+	while (every_word[i]!=NULL) {
+		if (strcmp(every_word[i],";")==0) {
+			inFile = every_word[i+1];
+			while (every_word[i+2]!=NULL) {
+				every_word[i] = every_word[i+2];
+				i++;
+			}
+			every_word[i]=NULL;
+			return(inFile);
+		}
+		i++;
+	}
+	return(inFile);
+}
+
 char *file() {
 	int i=0;
 	char *inFile=NULL;
@@ -48,44 +66,6 @@ int checkPipe() {
    return nbrOfPipe;
 }
 
-void execPrgm(){
-    char *fichier = file();
-    pid_t pid;
-    pid = fork();
-
-    //Cas des erreurs
-    if(pid < 0){
-      return;
-    }
-
-    if(pid==0){
-
-    	if (fichier != NULL) {
-  	    	execRedirect(fichier);
-  	    }
-   		
-      execvp(every_word[0],every_word);
-      printf("Can't execute \n");
-      exit(0);
-    }
-    else
-    {
-        WaitProcess(pid);
-    }
-}
-
-void execPtVirgule() {
-	char *cmd1 = strdup(every_word);
-	char *cmd2 = strtok(cmd1,";");
-	if (cmd2 == NULL) {
-		execPrgm();
-	}
-	while (cmd2!=NULL) {
-		execPrgm(cmd2[0],cmd2);
-		cmd2=strtok(NULL,";");
-	}
-}
-
 void execRedirect(char *fichier) {
 //    char *fichier = file();
 	pid_t pid;
@@ -101,6 +81,48 @@ void execRedirect(char *fichier) {
     }
 
 
+}
+
+void execPrgm(){
+    char *fichier = file();
+    char *command2 = commandAfterV();
+    pid_t pid;
+    pid = fork();
+
+    //Cas des erreurs
+    if(pid < 0){
+      return;
+    }
+
+    if(pid==0){
+
+    	if (fichier != NULL) {
+  	    	execRedirect(fichier);
+  	    }
+  	    
+  	    if (command2 != NULL) {
+  	    	execPtVirgule(fichier);
+  	    }
+   		
+      execvp(every_word[0],every_word);
+      printf("Can't execute \n");
+      exit(0);
+    }
+    else
+    {
+        WaitProcess(pid);
+    }
+}
+
+void execPtVirgule() {
+	//printf("%s\n",*every_word);
+	//char *cmd1 = strdup(every_word);
+	//printf("%s\n",every_word);
+	char *cmd2 = strtok(every_word,";");
+	while (cmd2!=NULL) {
+		execPrgm(cmd2[0],cmd2);
+		cmd2=strtok(NULL,";");
+	}
 }
 
 void execCD() {
@@ -198,7 +220,7 @@ int main(int argc, char *argv[]) {
          exit(0);
        }
        else {
-         execPtVirgule();
+         execPrgm();
        }
      }
      displayUserPath();

@@ -22,6 +22,9 @@ void execCD();
 void execPWD();
 void execRedirect(char *fichier);
 void clearTab();
+char *commandAfterV();
+void execPtVirgule();
+
 
 void displayUserPath();
 
