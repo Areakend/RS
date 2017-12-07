@@ -140,49 +140,29 @@ void clearTab() {
 }
 
 void inputParser(char *buffer) {
+  const char *delimiter = " ";
   char *token;
-  token = malloc(MAX_ARGS_SIZE * sizeof(char));
   int spaceOffset = preprocessing(buffer);
-
+  int i;
   char *buff = buffer + spaceOffset;
 
-  //Avancée dans le buffer
-  int i;
-  //Avancée dans le mot en cours
-  int i2 = 0;
-  //Avancée dans l'index de tableaux de mots
-  int i3 = 0;
+  token = strtok(buff, delimiter);
 
-  for(i = 0; i < strlen(buff)+1; i++) {
-    switch (buff[i]) {
-    case '\0':
-    case ' ':
-    {
-      token[i2] = '\0';
-      every_word[i3] = malloc(sizeof(token));
-      strcpy(every_word[i3],token);
-      free(token);
-      token = malloc(MAX_ARGS_SIZE * sizeof(char));
-      i2 = 0;
-      i3++;
-    }
-      break;
-    case '\n':
-      break;
-    default:
-      {
-        token[i2] = buff[i];
-        i2++;
-      }
-    }
+  while(token != NULL) {
+    every_word[i] = malloc(sizeof(token));
+    strcpy(every_word[i],token);
+    token = strtok(NULL, delimiter);
+    i++;
   }
-
 }
 
 int preprocessing(char *buffer) {
   int i = 0;
   while(buffer[i] == ' ') {
     i++;
+  }
+  if (buffer[strlen(buffer)-1] == '\n') {
+    buffer[strlen(buffer)-1] = '\0';
   }
   return i;
 }
