@@ -61,12 +61,9 @@ void execPrgm(){
     if(pid==0){
 
     	if (fichier != NULL) {
-  	    int redirect = (int)freopen(fichier, "w", stdout);
-    		if (redirect == -1) {
-      		printf("Error file\n");
-      		exit(0);
+  	    	execRedirect(fichier);
   	    }
-   		}
+   		
       execvp(every_word[0],every_word);
       printf("Can't execute \n");
       exit(0);
@@ -77,9 +74,21 @@ void execPrgm(){
     }
 }
 
-void execRedirect() {
-    char *fichier = file();
-	  pid_t pid;
+void execPtVirgule() {
+	char *cmd1 = strdup(every_word);
+	char *cmd2 = strtok(cmd1,";");
+	if (cmd2 == NULL) {
+		execPrgm();
+	}
+	while (cmd2!=NULL) {
+		execPrgm(cmd2[0],cmd2);
+		cmd2=strtok(NULL,";");
+	}
+}
+
+void execRedirect(char *fichier) {
+//    char *fichier = file();
+	pid_t pid;
     pid = fork();
     //Cas des erreurs
     if(pid < 0){
@@ -189,7 +198,7 @@ int main(int argc, char *argv[]) {
          exit(0);
        }
        else {
-         execPrgm();
+         execPtVirgule();
        }
      }
      displayUserPath();

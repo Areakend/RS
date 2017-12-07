@@ -20,7 +20,7 @@ void inputParser(char* buffer);
 int preprocessing(char *buffer);
 void execCD();
 void execPWD();
-void execRedirect();
+void execRedirect(char *fichier);
 void clearTab();
 
 void displayUserPath();
