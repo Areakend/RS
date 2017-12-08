@@ -53,17 +53,63 @@ char *file() {
 	return(inFile);
 }
 
-int checkPipe() {
+int checkPipe(char *const argv[]) {
   int i = 0;
   int nbrOfPipe = 0;
-  while (every_word[i]!=NULL) {
-	   if (strcmp(every_word[i],"|")==0) {
+  while (argv[i]!=NULL) {
+	   if (strcmp(argv[i],"|")==0) {
        indexOfPipe[nbrOfPipe] = i;
        nbrOfPipe++;
      }
      i++;
    }
    return nbrOfPipe;
+}
+
+void execPipe(int startIndex, int pipeIndex, int stopIndex) {
+  currentPipe++;
+  pid_t leftPID;
+  pid_t rightPID;
+  int index = startIndex;
+  int fd[2];
+  char *bufin[pipeIndex - startIndex];
+  char *bufout[stopIndex - pipeIndex];
+
+  while(index <= stopIndex) {
+    if (index < pipeIndex) {
+      bufin[index] = malloc(sizeof(every_word[index]));
+      strcpy(bufin[index], every_word[index]);
+    } else if (index > pipeIndex) {
+      bufout[index-pipeIndex-1] = malloc(sizeof(every_word[index]));
+      strcpy(bufout[index-pipeIndex-1], every_word[index]);
+    }
+    index++;
+  }
+
+  pipe(fd);
+
+  leftPID = fork();
+  if (leftPID == 0) {
+    dup2(fd[1], STDOUT_FILENO);
+    close(fd[0]);
+    runCommand(bufin[0], bufin);
+    printf("In : Can't execute \n");
+    exit(0);
+  }
+
+  rightPID = fork();
+  if (rightPID == 0) {
+    dup2(fd[0], STDIN_FILENO);
+    close(fd[1]);
+    runCommand(bufout[0], bufout);
+    printf("Out : Can't execute \n");
+    exit(0);
+  }
+
+  close(fd[0]);
+  close(fd[1]);
+  WaitProcess(leftPID);
+  WaitProcess(rightPID);
 }
 
 void execRedirect(char *fichier) {
@@ -81,37 +127,6 @@ void execRedirect(char *fichier) {
     }
 
 
-}
-
-void execPrgm(){
-    char *fichier = file();
-    char *command2 = commandAfterV();
-    pid_t pid;
-    pid = fork();
-
-    //Cas des erreurs
-    if(pid < 0){
-      return;
-    }
-
-    if(pid==0){
-
-    	if (fichier != NULL) {
-  	    	execRedirect(fichier);
-  	    }
-  	    
-  	    if (command2 != NULL) {
-  	    	execPtVirgule(fichier);
-  	    }
-   		
-      execvp(every_word[0],every_word);
-      printf("Can't execute \n");
-      exit(0);
-    }
-    else
-    {
-        WaitProcess(pid);
-    }
 }
 
 void execPtVirgule() {
@@ -166,8 +181,13 @@ void displayUserPath() {
 void clearTab() {
   int i;
   for (i=0;i<MAX_ARGS;i++) {
-    every_word[i] = NULL;
+    every_word[i] = (char*) NULL;
   }
+  for (i=0;i<MAX_PIPES;i++) {
+    indexOfPipe[i] = (int) NULL;
+  }
+  nbrOfWord = 0;
+  currentPipe = 0;
 }
 
 void inputParser(char *buffer) {
@@ -178,12 +198,13 @@ void inputParser(char *buffer) {
   char *buff = buffer + spaceOffset;
 
   token = strtok(buff, delimiter);
-
+  nbrOfWord = 0;
   while(token != NULL) {
     every_word[i] = malloc(sizeof(token));
     strcpy(every_word[i],token);
     token = strtok(NULL, delimiter);
     i++;
+    nbrOfWord++;
   }
 }
 
@@ -198,9 +219,79 @@ int preprocessing(char *buffer) {
   return i;
 }
 
+void execPrgm(){
+    char *fichier = file();
+    char *command2 = commandAfterV();
+    pid_t pid;
+    pid = fork();
+
+    //Cas des erreurs
+    if(pid < 0){
+      return;
+    }
+
+    if(pid==0){
+
+    	if (fichier != NULL) {
+  	    	execRedirect(fichier);
+  	    }
+
+  	    if (command2 != NULL) {
+  	    	execPtVirgule(fichier);
+  	    }
+
+      execvp(every_word[0],every_word);
+      printf("Can't execute \n");
+      exit(0);
+    }
+    else
+    {
+      WaitProcess(pid);
+    }
+}
+
+void runCommand(const char *first, char *const argv[]) {
+  int nbrOfPipe = checkPipe(argv);
+  printf("Current : %d\n", currentPipe);
+  char *fichier = file();
+  char *command2 = commandAfterV();
+  pid_t pid;
+
+  pid = fork();
+  if(pid < 0){
+    printf("Error during Fork\n");
+    return;
+  }
+
+  if (pid > 0) {
+    WaitProcess(pid);
+  } else {
+    if (currentPipe < nbrOfPipe) {
+      if (currentPipe == 0) {
+        printf("CAS PREMIER PIPE\n");
+        execPipe(0, indexOfPipe[currentPipe], nbrOfWord-1);
+      } else if ((currentPipe+1) == nbrOfPipe) {
+        printf("CAS DERNIER PIPE\n");
+      } else {
+        printf("CAS PIPE\n");
+        //execPipe(indexOfPipe[currentPipe-1]+1,currentPipe, nbrOfWord-1);
+      }
+    } else if (fichier != NULL) {
+      execRedirect(fichier);
+    } else if (command2 != NULL) {
+      execPtVirgule(fichier);
+    } else {
+      execvp(first, argv);
+      printf("RunCommand : Can't execute\n");
+      exit(0);
+    }
+
+  }
+}
+
 int main(int argc, char *argv[]) {
 	char buffer[MAX_INPUT_SIZE];
-	displayUserPath();
+	//displayUserPath();
 	while(1){
 	   if(!fgets(buffer,sizeof(buffer)-1,stdin)){
 	      printf("\n");
@@ -220,9 +311,9 @@ int main(int argc, char *argv[]) {
          exit(0);
        }
        else {
-         execPrgm();
+         runCommand(every_word[0],every_word);
        }
      }
-     displayUserPath();
+     //displayUserPath();
   }
 }
