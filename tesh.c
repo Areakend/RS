@@ -36,6 +36,26 @@ char *commandAfterV() {
 	return(inFile);
 }
 
+char *commandAfterA() {
+	int i=0;
+	char *inFile=NULL;
+	while (every_word[i]!=NULL) {
+		if (strcmp(every_word[i],"&")==0) {
+			if (strcmp(every_word[i],"&")==0) {
+				inFile = every_word[i+2];
+				while (every_word[i+2]!=NULL) {
+					every_word[i] = every_word[i+2];
+					i++;
+				}
+				every_word[i]=NULL;
+				return(inFile);
+			}
+		}
+		i++;
+	}
+	return(inFile);
+}
+
 char *file() {
 	int i=0;
 	char *inFile=NULL;
@@ -140,6 +160,17 @@ void execPtVirgule() {
 	}
 }
 
+void execAnd() {
+	//printf("%s\n",*every_word);
+	//char *cmd1 = strdup(every_word);
+	//printf("%s\n",every_word);
+	char *cmd2 = strtok(every_word,"&&");
+	while (cmd2!=NULL) {
+		execPrgm(cmd2[0],cmd2);
+		cmd2=strtok(NULL,"&&");
+	}
+}
+
 void execCD() {
 	char user[128];
 	char tmpDir[128];
@@ -222,6 +253,7 @@ int preprocessing(char *buffer) {
 void execPrgm(){
     char *fichier = file();
     char *command2 = commandAfterV();
+    char *command3 = commandAfterA();
     pid_t pid;
     pid = fork();
 
@@ -229,7 +261,7 @@ void execPrgm(){
     if(pid < 0){
       return;
     }
-
+    
     if(pid==0){
 
     	if (fichier != NULL) {
@@ -237,9 +269,12 @@ void execPrgm(){
   	    }
 
   	    if (command2 != NULL) {
-  	    	execPtVirgule(fichier);
+  	    	execPtVirgule(every_word);
   	    }
-
+  	    
+  	    if (command3 != NULL) {
+  	    	execAnd	(every_word);
+  	    }
       execvp(every_word[0],every_word);
       printf("Can't execute \n");
       exit(0);
@@ -251,12 +286,13 @@ void execPrgm(){
 }
 
 void runCommand(const char *first, char *const argv[]) {
+  	//    printf("0");
   int nbrOfPipe = checkPipe(argv);
-  printf("Current : %d\n", currentPipe);
+ // printf("Current : %d\n", currentPipe);
   char *fichier = file();
   char *command2 = commandAfterV();
   pid_t pid;
-
+  //	    printf("1");
   pid = fork();
   if(pid < 0){
     printf("Error during Fork\n");
@@ -265,6 +301,7 @@ void runCommand(const char *first, char *const argv[]) {
 
   if (pid > 0) {
     WaitProcess(pid);
+      	    printf("2");
   } else {
     if (currentPipe < nbrOfPipe) {
       if (currentPipe == 0) {
@@ -279,7 +316,7 @@ void runCommand(const char *first, char *const argv[]) {
     } else if (fichier != NULL) {
       execRedirect(fichier);
     } else if (command2 != NULL) {
-      execPtVirgule(fichier);
+      execPtVirgule(every_word);
     } else {
       execvp(first, argv);
       printf("RunCommand : Can't execute\n");
