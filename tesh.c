@@ -73,63 +73,64 @@ char *file() {
 	return(inFile);
 }
 
-int checkPipe(char *const argv[]) {
+int checkPipe(char *buffer) {
   int i = 0;
   int nbrOfPipe = 0;
-  while (argv[i]!=NULL) {
-	   if (strcmp(argv[i],"|")==0) {
-       indexOfPipe[nbrOfPipe] = i;
-       nbrOfPipe++;
-     }
-     i++;
-   }
+  char* token;
+
+  token = strtok(buffer, " ");
+  while(token != NULL) {
+    if (strcmp(token,"|") == 0) {
+      indexOfPipe[nbrOfPipe] = i;
+      nbrOfPipe++;
+    }
+    token = strtok(NULL, " ");
+    i++;
+  }
    return nbrOfPipe;
 }
 
-void execPipe(int startIndex, int pipeIndex, int stopIndex) {
-  currentPipe++;
-  pid_t leftPID;
-  pid_t rightPID;
-  int index = startIndex;
-  int fd[2];
-  char *bufin[pipeIndex - startIndex];
-  char *bufout[stopIndex - pipeIndex];
-
-  while(index <= stopIndex) {
-    if (index < pipeIndex) {
-      bufin[index] = malloc(sizeof(every_word[index]));
-      strcpy(bufin[index], every_word[index]);
-    } else if (index > pipeIndex) {
-      bufout[index-pipeIndex-1] = malloc(sizeof(every_word[index]));
-      strcpy(bufout[index-pipeIndex-1], every_word[index]);
+void pipe_redirect(int oldfd, int newfd) {
+  if (oldfd != newfd) {
+    if (dup2(oldfd,newfd) != -1) {
+      close(oldfd);
+    } else {
+      printf("Error in duping\n");
     }
-    index++;
   }
+}
 
-  pipe(fd);
-
-  leftPID = fork();
-  if (leftPID == 0) {
-    dup2(fd[1], STDOUT_FILENO);
-    close(fd[0]);
-    runCommand(bufin[0], bufin);
-    printf("In : Can't execute \n");
+void execPipe(int pos, int in_fd) {
+  if (commands[pos + 1] == NULL) {
+    pipe_redirect(in_fd, STDIN_FILENO);
+    // A MODIFIER POUR COMMAND RAPH
+    execvp(commands[pos][0], commands[pos]);
+    printf("Can't execute\n");
     exit(0);
-  }
+  } else {
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+      printf("Error in piping\n");
+    }
 
-  rightPID = fork();
-  if (rightPID == 0) {
-    dup2(fd[0], STDIN_FILENO);
-    close(fd[1]);
-    runCommand(bufout[0], bufout);
-    printf("Out : Can't execute \n");
-    exit(0);
+    switch(fork()) {
+      case -1:
+        printf("Error in forking\n");
+      case 0:
+        child = 1;
+        close(pipefd[0]);
+        pipe_redirect(in_fd, STDIN_FILENO);
+        pipe_redirect(pipefd[1], STDOUT_FILENO);
+        //A MODIFIER POUR COMMAND RAPH
+        execvp(commands[pos][0], commands[pos]);
+        printf("Can't execute\n");
+        exit(0);
+      default:
+        close(pipefd[1]);
+        close(in_fd);
+        execPipe(pos + 1, pipefd[0]);
+    }
   }
-
-  close(fd[0]);
-  close(fd[1]);
-  WaitProcess(leftPID);
-  WaitProcess(rightPID);
 }
 
 void execRedirect(char *fichier) {
@@ -217,8 +218,17 @@ void clearTab() {
   for (i=0;i<MAX_PIPES;i++) {
     indexOfPipe[i] = (int) NULL;
   }
-  nbrOfWord = 0;
-  currentPipe = 0;
+  //nbrOfWord = 0;
+  //currentPipe = 0;
+}
+
+void clearTab2() {
+  int i; int j;
+  for (i = 0; i < MAX_PIPES; i++) {
+    for (j = 0; j < MAX_ARGS; j++) {
+      commands[i][j] = NULL;
+    }
+  }
 }
 
 void inputParser(char *buffer) {
@@ -229,14 +239,58 @@ void inputParser(char *buffer) {
   char *buff = buffer + spaceOffset;
 
   token = strtok(buff, delimiter);
-  nbrOfWord = 0;
+  //nbrOfWord = 0;
   while(token != NULL) {
     every_word[i] = malloc(sizeof(token));
     strcpy(every_word[i],token);
     token = strtok(NULL, delimiter);
     i++;
-    nbrOfWord++;
+    //nbrOfWord++;
   }
+}
+
+void inputParser2(char *buffer) {
+  const char *delimiter = " ";
+  char *token;
+  int spaceOffset = preprocessing(buffer);
+  char *buff = buffer + spaceOffset;
+  int limit = strlen(buff);
+  char *buff2 = malloc(strlen(buff)+1);
+  strcpy(buff2, buff);
+  int nbrOfPipe = checkPipe(buff2);
+
+  int index = 0;
+  int index2 = 0;
+  int nextPipe = 0;
+  int pos = 0;
+
+  int indexPipe;
+  if (nbrOfPipe == 0) {
+    indexPipe = limit;
+  } else {
+    indexPipe = indexOfPipe[nextPipe];
+  }
+
+  token = strtok(buff, delimiter);
+  while(token != NULL) {
+    if (index < indexPipe) {
+      commands[pos][index2] = malloc(sizeof(token));
+      strcpy(commands[pos][index2],token);
+      index2++;
+    } else {
+      nextPipe++;
+      if (nextPipe == nbrOfPipe) {
+        indexPipe = limit;
+      } else {
+        indexPipe = indexOfPipe[nextPipe];
+      }
+      pos++;
+      index2 = 0;
+    }
+    token = strtok(NULL, delimiter);
+    index++;
+  }
+
 }
 
 int preprocessing(char *buffer) {
@@ -261,7 +315,7 @@ void execPrgm(){
     if(pid < 0){
       return;
     }
-    
+
     if(pid==0){
 
     	if (fichier != NULL) {
@@ -271,7 +325,7 @@ void execPrgm(){
   	    if (command2 != NULL) {
   	    	execPtVirgule(every_word);
   	    }
-  	    
+
   	    if (command3 != NULL) {
   	    	execAnd	(every_word);
   	    }
@@ -286,13 +340,11 @@ void execPrgm(){
 }
 
 void runCommand(const char *first, char *const argv[]) {
-  	//    printf("0");
   int nbrOfPipe = checkPipe(argv);
- // printf("Current : %d\n", currentPipe);
   char *fichier = file();
   char *command2 = commandAfterV();
   pid_t pid;
-  //	    printf("1");
+
   pid = fork();
   if(pid < 0){
     printf("Error during Fork\n");
@@ -301,12 +353,11 @@ void runCommand(const char *first, char *const argv[]) {
 
   if (pid > 0) {
     WaitProcess(pid);
-      	    printf("2");
   } else {
-    if (currentPipe < nbrOfPipe) {
+    /*if (currentPipe < nbrOfPipe) {
       if (currentPipe == 0) {
         printf("CAS PREMIER PIPE\n");
-        execPipe(0, indexOfPipe[currentPipe], nbrOfWord-1);
+        //execPipe(0, indexOfPipe[currentPipe], nbrOfWord-1);
       } else if ((currentPipe+1) == nbrOfPipe) {
         printf("CAS DERNIER PIPE\n");
       } else {
@@ -321,23 +372,24 @@ void runCommand(const char *first, char *const argv[]) {
       execvp(first, argv);
       printf("RunCommand : Can't execute\n");
       exit(0);
-    }
+    }*/
 
   }
 }
 
 int main(int argc, char *argv[]) {
-	char buffer[MAX_INPUT_SIZE];
-	//displayUserPath();
+	displayUserPath();
 	while(1){
 	   if(!fgets(buffer,sizeof(buffer)-1,stdin)){
 	      printf("\n");
         exit(0);
    	 }
-     clearTab();
-     inputParser(buffer);
+     clearTab2();
+     //inputParser(buffer);
+     inputParser2(buffer);
+     execPipe(0, STDIN_FILENO);
 
-     if (strcmp(every_word[0],"") != 0) { //Si Non Entrée sans rien
+     /*if (strcmp(every_word[0],"") != 0) { //Si Non Entrée sans rien
        if (strcmp(every_word[0],"cd") == 0) {
          execCD();
        }
@@ -350,7 +402,7 @@ int main(int argc, char *argv[]) {
        else {
          runCommand(every_word[0],every_word);
        }
-     }
-     //displayUserPath();
+     }*/
+     displayUserPath();
   }
 }
