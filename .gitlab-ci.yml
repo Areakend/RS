@@ -5,5 +5,13 @@ tesh-tester: # do not modify this test
                 - wget -O - https://members.loria.fr/lnussbaum/RS/tesh-tester | bash
 
 your-own-test: # feel free to modify this test and add more
+        image: debian:stretch
         script:
-                - ls
+                - apt-get update && apt-get -y install wget
+                - wget -O - https://members.loria.fr/lnussbaum/RS/tesh-tester | bash
+                - echo -e 'ls' | ./tesh
+                - echo -e 'echo foo' | ./tesh
+                - echo -e 'echo foo bar baz \necho bar' | ./tesh
+                - echo -e 'echo foo ; echo bar' | ./tesh
+                - echo -e 'false && echo a \ntrue && echo b \nfalse || echo c \ntrue || echo d' | ./tesh
+                - echo -e 'cd /vagrant/fixtures \ncd d2 \ncd d2.1 \n pwd \nls' | ./tesh
