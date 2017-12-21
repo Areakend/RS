@@ -322,35 +322,45 @@ void run(int line) {
   }
 }
 
+
 int main(int argc, char *argv[]) {
-	displayUserPath();
-	while(1){
-	   if(!fgets(buffer,sizeof(buffer)-1,stdin)){
-	      printf("\n");
-        exit(0);
-   	 }
-     clearTab();
-     inputParser(buffer);
 
-     int line;
-     for(line = 0; line < nbrOfLines; line++) {
-       run(line);
+//	if (argc==1) {
+//	if (isatty(fileno(stdin))) {
+	if (!isatty(0)) {
+		FILE *file = fopen(argv[1], "r");
+		while(fgets(buffer,sizeof(buffer)-1,file)!=NULL) {
+
+		
+		clearTab();
+		inputParser(buffer);
+		 int line;
+		 for(line = 0; line < nbrOfLines; line++) {
+		   run(line);
+		 }
+		 }
+	}
+	
+	else {
+	if (argc!=1) {
+		displayUserPath();
+	}
+		while(1){
+		   if(!fgets(buffer,sizeof(buffer)-1,stdin)){
+		   if (argc>1) {
+			  printf("\n");
+		   }
+		    exit(0);
+	   	 }
+		 clearTab();
+		 inputParser(buffer);
+
+		 int line;
+		 for(line = 0; line < nbrOfLines; line++) {
+		   run(line);
+		 }
      }
-
-     /*if (strcmp(every_word[0],"") != 0) { //Si Non Entrée sans rien
-       if (strcmp(every_word[0],"cd") == 0) {
-         execCD();
-       }
-       else if (strcmp(every_word[0],"pwd") == 0) {
-         execPWD();
-       }
-       else if (strcmp(every_word[0],"exit") == 0) {
-         exit(0);
-       }
-       else {
-         runCommand(every_word[0],every_word);
-       }
-     }*/
      displayUserPath();
   }
+       displayUserPath();
 }
