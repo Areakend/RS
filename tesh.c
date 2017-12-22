@@ -179,7 +179,7 @@ void execAnd() {
 		cmd2=strtok(NULL,"&&");
 	}
 }
-
+*/
 void execCD() {
 	char user[128];
 	char tmpDir[128];
@@ -187,7 +187,7 @@ void execCD() {
 	char temp[10];
 	strcpy(tmpDir,"/home");
 	strcpy(temp,"/");
-	if (strcmp(every_word[1],"~")==0) {
+	if (strcmp(commands[0][0][0][1],"~")==0) {
 		strcpy(user, getenv("USER"));
 		strcat(tmpDir,temp);
 		strcat(tmpDir,user);
@@ -195,14 +195,15 @@ void execCD() {
 	}
 	else {
 		getcwd(tmpDir, sizeof(tmpDir));
-		chdir(every_word[1]);
+		chdir(commands[0][0][0][1]);
 		getcwd(tmpDir2, sizeof(tmpDir2));
-		if (strcmp(tmpDir,tmpDir2)==0) {
-			printf("Folder %s not found\n",every_word[1]);
-		}
+//		if (strcmp(tmpDir,tmpDir2)==0) {
+//			printf("Folder %s not found\n",commands[0][0][0][1]);
+//		}
 	}
 }
 
+/*
 void execPWD() {
   char tmpDir[128];
   getcwd(tmpDir, sizeof(tmpDir));
@@ -439,7 +440,6 @@ void execAndOr(int line) {
 void execSemicolon(int line) {
   pid_t pid;
   int andor = 0;
-
   pid = fork();
   if(pid < 0){
     printf("Error during Fork in : run()\n");
@@ -455,12 +455,16 @@ void execSemicolon(int line) {
 
 int main(int argc, char *argv[]) {
   int line;
+  int testCD = 0;
 
 	if (!isatty(0)) {
 		while(fgets(buffer,sizeof(buffer)-1,stdin)!=NULL) {
     	clearTab();
     	inputParser(buffer);
       for (line = 0; line < nbrOfLines; line++) {
+      	if (strcmp(commands[0][0][0][testCD],"cd")==0) {
+		execCD();
+	}
         execSemicolon(line);
       }
 		}
@@ -476,12 +480,15 @@ int main(int argc, char *argv[]) {
 
         clearTab();
         inputParser(buffer);
-
         for (line = 0; line < nbrOfLines; line++) {
+        	if (strcmp(commands[testCD][0][0][0],"cd")==0) {
+				execCD();
+	}
           execSemicolon(line);
         }
         displayUserPath();
     }
+    testCD = testCD + 1;
   }
 
 
