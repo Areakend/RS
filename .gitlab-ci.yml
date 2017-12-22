@@ -15,3 +15,8 @@ your-own-test: # feel free to modify this test and add more
                 - echo -e 'echo foo ; echo bar' | ./tesh
                 - echo -e 'false && echo a \ntrue && echo b \nfalse || echo c \ntrue || echo d' | ./tesh
                 - echo -e 'cd /vagrant/fixtures \ncd d2 \ncd d2.1 \n pwd \nls' | ./tesh
+                - echo -e 'cat /vagrant/fixtures/redir/lorem-ipsum > /tmp/TMPFILE\necho sortie de echo\ncat /tmp/TMPFILE' | ./tesh
+                - echo -e 'echo a\necho b\nfalse\necho c' | ./tesh
+                - echo -e 'echo foo\nid' | ./tesh
+                - echo -e 'ps' | ./tesh
+                - echo -e 'echo foo\n/vagrant/fixtures/mypid\necho bar\n\n/vagrant/fixtures/mypid\n/vagrant/fixtures/mypid' | ./tesh
