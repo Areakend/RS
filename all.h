@@ -40,6 +40,7 @@ void displayUserPath();
 
 int preprocessing(char *buffer);
 char* copyBuffer(char *buffer);
+char** backgroundArray(char **array);
 void affectAndOrAlias(int line);
 
 void splitBySemicolon(char *buffer);
@@ -51,11 +52,11 @@ void execCD();
 void execPWD();
 void execRedirect(char *fichier);
 
-void execWithPriority(int commandIndex);
+void execWithPriority(const char *command, char *const argv[]);
 
 void execSemicolon(int line); //Précédement execPtVirgule
-void execAndOr(int line, int andor); //Précédement execPtVirgule
-void execPipe(int line, int andor);
+void execAndOr(int line); //Précédement execPtVirgule
+int execPipe(int line, int andor, int inBackground);
 
 int checkSemicolon(char *buffer); //Précédement commandAfterV
 int checkAndOr(char *buffer, int line);

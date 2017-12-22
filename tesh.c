@@ -233,7 +233,7 @@ void clearTab() {
       andors[s][ao] = NULL;
       nbrOfPipes[s][ao] = 0;
       indexOfAndOr[s][ao][0] = 0;
-      indexOfAndOr[s][ao][1] = 0;
+      indexOfAndOr[s][ao][1] = 1;
     }
     lines[s] = NULL;
     nbrOfAndOrs[s] = 0;
@@ -244,6 +244,18 @@ void clearTab() {
 char* copyBuffer(char *buffer) {
   char *copy = malloc(strlen(buffer)+1);
   strcpy(copy, buffer);
+  return copy;
+}
+
+char** backgroundArray(char **array) {
+  char **copy = malloc(sizeof(array) + sizeof(char*));
+  int i;
+  while (array[i] != NULL) {
+    strcpy(copy[i], array[i]);
+    i++;
+  }
+  strcpy(copy[i], "&");
+
   return copy;
 }
 
@@ -308,25 +320,26 @@ void inputParser(char *buffer) {
           token = strtok(NULL, delimiter);
           indexCommand++;
         }
-        nbrOfCommands[line][andor][pipe] = indexCommand;
+        nbrOfCommands[line][andor][pipe] = indexCommand + 1;
       }
     }
   }
 
 }
 
-/*void execWithPriority(int commandIndex) {
-  char *semiColon = commandAfterV(commandIndex);
+void execWithPriority(const char *command, char *const argv[]) {
+  /*char *semiColon = commandAfterV(commandIndex);
 
   if (command2 != NULL) {
     execSemicolon(commandIndex);
   }
 
-  execvp(commands[commandIndex][0], (char * const *)commands[commandIndex])
-}*/
+  execvp(commands[commandIndex][0], (char * const *)commands[commandIndex])*/
+}
 
-int pipeRedirect(char*** nextCommand, int buffin, int buffout) {
-  /*pid_t pid = fork ();
+int pipeRedirect(char** nextCommand, int buffin, int buffout, int *executionSuccessful, int inBackground) {
+  pid_t pid = fork ();
+  int execRes = 0;
   if (pid == 0) {
     if (buffout != 1) {
       dup2 (buffout, 1);
@@ -336,21 +349,33 @@ int pipeRedirect(char*** nextCommand, int buffin, int buffout) {
       dup2 (buffin, 0);
       close (buffin);
     }
-    return execvp(nextCommand[0], (char * const *) nextCommand);
+    execRes = execvp(nextCommand[0], (char * const *) nextCommand);
+    if (execRes < 0) {
+      *executionSuccessful = 0;
+    }
+    return execRes;
   }
-  return pid;*/
+  return pid;
 }
 
-void execPipe(int line, int andor) {
-/*  pid_t pid;
+int execPipe(int line, int andor, int inBackground) {
+
+  int executionSuccessful = 1;
 
   int pipefd[2], k, buffin;
   buffin = 0;
 
-  for(k=0; k < nbrOfCommands[line] - 1; k++) {
+  for(k=0; k < nbrOfPipes[line][andor] - 1; k++) {
     pipe(pipefd);
-    pipeRedirect(commands[line] + k, buffin, pipefd[1]);
+
+    if (inBackground == 1) {
+      pipeRedirect(backgroundArray(commands[line][andor] + k), buffin, pipefd[1], &executionSuccessful, 1);
+    } else {
+      pipeRedirect(commands[line][andor] + k, buffin, pipefd[1], &executionSuccessful, 0);
+    }
     close(pipefd[1]);
+
+
     buffin = pipefd[0];
   }
 
@@ -358,15 +383,56 @@ void execPipe(int line, int andor) {
     dup2(buffin, 0);
   }
 
-  execvp(commands[line][k][0], (char * const *)commands[line][k]);*/
+  if (inBackground == 1) {
+    if (execvp(commands[line][andor][k][0], (char * const *) backgroundArray(commands[line][andor][k])) < 0) {
+      executionSuccessful = 0;
+    }
+  } else {
+    if (execvp(commands[line][andor][k][0], (char * const *) commands[line][andor][k]) < 0) {
+      executionSuccessful = 0;
+    }
+  }
+  return executionSuccessful;
 }
 
-void execAndOr(int line, int andor) {
+/*void execAndOr(int line, int andor, int execSuccessful) {
+  int success = execSuccessful;
 
-  if (indexOfAndOr[line][andor][1] == 0) { //Cas ||
+  if (nbrOfPipes[line][andor+1] != NULL) { //Cas non dernier andor
 
-  } else { //Cas &&
+    success = success && execPipe(line, andor, 1);
 
+    if (indexOfAndOr[line][andor][1] == 0) { //Cas ||
+      if (success == 0) {
+        execAndOr(line, andor+1, success);
+      }
+    } else { //Cas &&
+      if (success > 0) {
+        execAndOr(line, andor+1, success);
+      }
+    }
+  } else {
+
+    execPipe(line, andor, 0);
+  }
+}*/
+
+void execAndOr(int line) {
+  int success = 1;
+  int andor;
+
+  for (andor = 0; andor < nbrOfAndOrs[line]; andor++) {
+
+    if (nbrOfPipes[line][andor+1] > 1) {
+      success = success && execPipe(line, andor, 1);
+    } else {
+      if ((indexOfAndOr[line][andor][1] == 0) && (success == 0)) {
+        execPipe(line, andor, 0);
+      }
+      if ((indexOfAndOr[line][andor][1] == 1) && (success == 1)) {
+        execPipe(line, andor, 0);
+      }
+    }
   }
 }
 
@@ -383,13 +449,12 @@ void execSemicolon(int line) {
   if (pid > 0) {
     WaitProcess(pid);
   } else {
-    for (andor = 0; andor < nbrOfAndOrs[line]; andor++) {
-      execAndOr(line, andor);
-    }
+    execAndOr(line);
   }
 }
 
 int main(int argc, char *argv[]) {
+  int line;
 
 	if (!isatty(0)) {
 		while(fgets(buffer,sizeof(buffer)-1,stdin)!=NULL) {
@@ -410,8 +475,12 @@ int main(int argc, char *argv[]) {
         clearTab();
         inputParser(buffer);
 
-        //run();
+        for (line = 0; line < nbrOfLines; line++) {
+          execSemicolon(line);
+        }
         displayUserPath();
     }
   }
+
+
 }
