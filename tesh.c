@@ -328,8 +328,8 @@ int main(int argc, char *argv[]) {
 //	if (argc==1) {
 //	if (isatty(fileno(stdin))) {
 	if (!isatty(0)) {
-		FILE *file = fopen(argv[1], "r");
-		while(fgets(buffer,sizeof(buffer)-1,file)!=NULL) {
+//		FILE *file = fopen(argv[1], "r");
+		while(fgets(buffer,sizeof(buffer)-1,stdin)!=NULL) {
 
 		
 		clearTab();
@@ -342,9 +342,7 @@ int main(int argc, char *argv[]) {
 	}
 	
 	else {
-	if (argc!=1) {
 		displayUserPath();
-	}
 		while(1){
 		   if(!fgets(buffer,sizeof(buffer)-1,stdin)){
 		   if (argc>1) {
@@ -359,8 +357,8 @@ int main(int argc, char *argv[]) {
 		 for(line = 0; line < nbrOfLines; line++) {
 		   run(line);
 		 }
+	  displayUserPath();
      }
-     displayUserPath();
   }
-       displayUserPath();
+
 }
