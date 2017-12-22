@@ -152,45 +152,10 @@ char *file() {
 		i++;
 	}
 	return(inFile);
-}
+}*/
 
-int pipeRedirect(char*** nextCommand, int buffin, int buffout) {
-  pid_t pid = fork ();
-  if (pid == 0) {
-    if (buffout != 1) {
-      dup2 (buffout, 1);
-      close (buffout);
-    }
-    if (buffin != 0) {
-      dup2 (buffin, 0);
-      close (buffin);
-    }
-    return execvp(nextCommand[0], (char * const *) nextCommand);
-  }
-  return pid;
-}
 
-void execPipe(int line) {
-  pid_t pid;
-
-  int pipefd[2], k, buffin;
-  buffin = 0;
-
-  for(k=0; k < nbrOfCommands[line] - 1; k++) {
-    pipe(pipefd);
-    pipeRedirect(commands[line] + k, buffin, pipefd[1]);
-    close(pipefd[1]);
-    buffin = pipefd[0];
-  }
-
-  if (buffin != 0) {
-    dup2(buffin, 0);
-  }
-
-  execvp(commands[line][k][0], (char * const *)commands[line][k]);
-}
-
-void execRedirect(char *fichier) {
+/*void execRedirect(char *fichier) {
   pid_t pid;
   pid = fork();
   //Cas des erreurs
@@ -360,8 +325,49 @@ void inputParser(char *buffer) {
   execvp(commands[commandIndex][0], (char * const *)commands[commandIndex])
 }*/
 
+int pipeRedirect(char*** nextCommand, int buffin, int buffout) {
+  /*pid_t pid = fork ();
+  if (pid == 0) {
+    if (buffout != 1) {
+      dup2 (buffout, 1);
+      close (buffout);
+    }
+    if (buffin != 0) {
+      dup2 (buffin, 0);
+      close (buffin);
+    }
+    return execvp(nextCommand[0], (char * const *) nextCommand);
+  }
+  return pid;*/
+}
+
+void execPipe(int line, int andor) {
+/*  pid_t pid;
+
+  int pipefd[2], k, buffin;
+  buffin = 0;
+
+  for(k=0; k < nbrOfCommands[line] - 1; k++) {
+    pipe(pipefd);
+    pipeRedirect(commands[line] + k, buffin, pipefd[1]);
+    close(pipefd[1]);
+    buffin = pipefd[0];
+  }
+
+  if (buffin != 0) {
+    dup2(buffin, 0);
+  }
+
+  execvp(commands[line][k][0], (char * const *)commands[line][k]);*/
+}
+
 void execAndOr(int line, int andor) {
 
+  if (indexOfAndOr[line][andor][1] == 0) { //Cas ||
+
+  } else { //Cas &&
+
+  }
 }
 
 void execSemicolon(int line) {
