@@ -424,7 +424,7 @@ void execAndOr(int line) {
   for (andor = 0; andor < nbrOfAndOrs[line]; andor++) {
 
     if (nbrOfPipes[line][andor+1] > 1) {
-      success = success && execPipe(line, andor, 1);
+      success = success && execPipe(line, andor, 0);
     } else {
       if ((indexOfAndOr[line][andor][1] == 0) && (success == 0)) {
         execPipe(line, andor, 0);
@@ -460,7 +460,9 @@ int main(int argc, char *argv[]) {
 		while(fgets(buffer,sizeof(buffer)-1,stdin)!=NULL) {
     	clearTab();
     	inputParser(buffer);
-      //run();
+      for (line = 0; line < nbrOfLines; line++) {
+        execSemicolon(line);
+      }
 		}
 	} else {
       displayUserPath();
