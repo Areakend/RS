@@ -17,20 +17,61 @@ void WaitProcess(pid_t pid) {
 
 int checkSemicolon(char *buffer) {
   int i = 0;
-  int nbrOfSemicolon = 0;
+  int semicolonIndex = 0;
   char* token;
 
   token = strtok(buffer, " ");
   while(token != NULL) {
     if (strcmp(token,";") == 0) {
-      indexOfSemicolon[nbrOfSemicolon] = i;
-      nbrOfSemicolon++;
+      indexOfSemicolon[semicolonIndex] = i;
+      semicolonIndex++;
     }
     token = strtok(NULL, " ");
     i++;
   }
-  nbrOfLines = nbrOfSemicolon + 1;
-  return nbrOfSemicolon;
+  nbrOfLines = semicolonIndex + 1;
+  return semicolonIndex;
+}
+
+int checkAndOr(char *buffer, int line) {
+  int i = 0;
+  int andorIndex = 0;
+  char* token;
+
+  token = strtok(buffer, " ");
+  while(token != NULL) {
+    if (strcmp(token,"||") == 0 || strcmp(token,"&&") == 0) {
+      indexOfAndOr[line][andorIndex][0] = i;
+      if (strcmp(token,"||") == 0) {
+        indexOfAndOr[line][andorIndex][1] = 0;
+      } else {
+        indexOfAndOr[line][andorIndex][1] = 1;
+      }
+      andorIndex++;
+    }
+    token = strtok(NULL, " ");
+    i++;
+  }
+  nbrOfAndOrs[line] = andorIndex + 1;
+  return andorIndex;
+}
+
+int checkPipe(char *buffer, int line, int andor) {
+  int i = 0;
+  int pipeIndex = 0;
+  char* token;
+
+  token = strtok(buffer, " ");
+  while(token != NULL) {
+    if (strcmp(token,"|") == 0) {
+      indexOfPipe[line][andor][pipeIndex] = i;
+      pipeIndex++;
+    }
+    token = strtok(NULL, " ");
+    i++;
+  }
+  nbrOfPipes[line][andor] = pipeIndex + 1;
+  return pipeIndex;
 }
 
 void splitBySemicolon(char *buffer) {
@@ -46,34 +87,37 @@ void splitBySemicolon(char *buffer) {
   }
 }
 
-int checkPipe(char *buffer, int line) {
-  int i = 0;
-  int nbrOfPipe = 0;
-  char* token;
+void splitByAndOr(char *buffer, int line) {
 
-  token = strtok(buffer, " ");
-  while(token != NULL) {
-    if (strcmp(token,"|") == 0) {
-      indexOfPipe[line][nbrOfPipe] = i;
-      nbrOfPipe++;
-    }
-    token = strtok(NULL, " ");
+  char *andor = strtok(buffer, ANDORALIAS);
+
+  int i = 0; int offset = 0;
+
+  while(andor != NULL) {
+    offset = preprocessing(copyBuffer(andor));
+    andors[line][i] = malloc(sizeof(andor + offset));
+    strcpy(andors[line][i], andor + offset);
+    andor = strtok(NULL, ANDORALIAS);
     i++;
   }
-  nbrOfCommands[line] = nbrOfPipe + 1;
-  return nbrOfPipe;
+}
+
+void splitByPipe(char *buffer, int line, int andor) {
+  char *pipe = strtok(buffer, "|");
+  int i = 0; int offset = 0;
+
+  while(pipe != NULL) {
+    offset = preprocessing(copyBuffer(pipe));
+    pipes[line][andor][i] = malloc(sizeof(pipe + offset));
+    strcpy(pipes[line][andor][i], pipe + offset);
+    pipe = strtok(NULL, "|");
+    i++;
+  }
 }
 
 /*
-void execSemicolon() {
-  char *cmd2 = strok(every_word, ";")
-  while (cmd!=NULL) {
-    execprgm(cmd2[0], cmd2);
-    cmd2= strtok(NULL, ";")
-}
-}*/
 
-/*char *commandAfterA() {
+char *commandAfterA() {
 	int i=0;
 	char *inFile=NULL;
 	while (every_word[i]!=NULL) {
@@ -108,7 +152,7 @@ char *file() {
 		i++;
 	}
 	return(inFile);
-}*/
+}
 
 int pipeRedirect(char*** nextCommand, int buffin, int buffout) {
   pid_t pid = fork ();
@@ -146,7 +190,7 @@ void execPipe(int line) {
   execvp(commands[line][k][0], (char * const *)commands[line][k]);
 }
 
-/*void execRedirect(char *fichier) {
+void execRedirect(char *fichier) {
   pid_t pid;
   pid = fork();
   //Cas des erreurs
@@ -210,14 +254,25 @@ void displayUserPath() {
 }
 
 void clearTab() {
-  int i; int j; int k;
-  for (k = 0; k < MAX_SEMICOLON; k++) {
-    for (i = 0; i < MAX_PIPES; i++) {
-      for (j = 0; j < MAX_ARGS; j++) {
-        commands[k][i][j] = NULL;
+  int s; int ao; int p; int a;
+  nbrOfLines = 0;
+  for (s = 0; s < MAX_SEMICOLON; s++) {
+    for (ao = 0; ao < MAX_AND_OR; ao++) {
+      for (p = 0; p < MAX_PIPES; p++) {
+        for (a = 0; a < MAX_ARGS; a++) {
+          commands[s][ao][p][a] = NULL;
+        }
+        pipes[s][ao][p] = NULL;
+        indexOfPipe[s][ao][p] = 0;
       }
-      indexOfPipe[k][i] = 0;
+      andors[s][ao] = NULL;
+      nbrOfPipes[s][ao] = 0;
+      indexOfAndOr[s][ao][0] = 0;
+      indexOfAndOr[s][ao][1] = 0;
     }
+    lines[s] = NULL;
+    nbrOfAndOrs[s] = 0;
+    indexOfSemicolon[s] = 0;
   }
 }
 
@@ -227,62 +282,24 @@ char* copyBuffer(char *buffer) {
   return copy;
 }
 
-void inputParser(char *buffer) {
-  const char *delimiter = " ";
-  char *token;
-  int line = 0;
-  int nbrOfPipe;
+void affectAndOrAlias(int line) {
+  char *buffer = copyBuffer(lines[line]);
+  char *token = strtok(buffer, " ");
+  char *newLine = malloc(sizeof(lines[line]) + 2 * sizeof(char));
 
-  int index;
-  int index2;
-  int nextPipe;
-  int pos;
-  int indexPipe;
-
-
-  int spaceOffset = preprocessing(buffer);
-  char *unspacedBuffer = buffer + spaceOffset;
-  int limit = strlen(unspacedBuffer);
-
-  splitBySemicolon(copyBuffer(unspacedBuffer));
-  checkSemicolon(copyBuffer(unspacedBuffer));
-
-  for (line = 0; line < nbrOfLines; line++) {
-    nbrOfPipe = checkPipe(copyBuffer(lines[line]), line);
-
-    index = 0;
-    index2 = 0;
-    nextPipe = 0;
-    pos = 0;
-
-    if (nbrOfPipe == 0) {
-      indexPipe = limit;
+  while(token != NULL) {
+    if ((strcmp(token, "||") == 0) || (strcmp(token, "&&") == 0)) {
+      strcat(newLine, ANDORALIAS);
     } else {
-      indexPipe = (uintptr_t) indexOfPipe[line][nextPipe];
+      strcat(newLine, token);
     }
-
-    token = strtok(lines[line], delimiter);
-    while(token != NULL) {
-      if (index < indexPipe) {
-        commands[line][pos][index2] = malloc(sizeof(token));
-        strcpy(commands[line][pos][index2],token);
-        index2++;
-      } else {
-        nextPipe++;
-        if (nextPipe == nbrOfPipe) {
-          indexPipe = limit;
-        } else {
-          indexPipe = (uintptr_t) indexOfPipe[line][nextPipe];
-        }
-        pos++;
-        index2 = 0;
-      }
-      token = strtok(NULL, delimiter);
-      index++;
-    }
-
+    strcat(newLine, " ");
+    token = strtok(NULL, " ");
   }
 
+  lines[line] = NULL;
+  lines[line] = malloc(sizeof(newLine));
+  strcpy(lines[line], newLine);
 }
 
 int preprocessing(char *buffer) {
@@ -296,6 +313,43 @@ int preprocessing(char *buffer) {
   return i;
 }
 
+void inputParser(char *buffer) {
+  const char *delimiter = " ";
+  char *token;
+  int line = 0; int andor = 0; int pipe = 0; int indexCommand = 0;
+
+  int spaceOffset = preprocessing(buffer);
+  char *unspacedBuffer = buffer + spaceOffset;
+
+  splitBySemicolon(copyBuffer(unspacedBuffer));
+  checkSemicolon(copyBuffer(unspacedBuffer));
+
+  for (line = 0; line < nbrOfLines; line++) {
+    checkAndOr(copyBuffer(lines[line]), line);
+    affectAndOrAlias(line);
+    splitByAndOr(copyBuffer(lines[line]), line);
+
+    for (andor = 0; andor < nbrOfAndOrs[line]; andor++) {
+      splitByPipe(copyBuffer(andors[line][andor]), line, andor);
+      checkPipe(copyBuffer(andors[line][andor]), line, andor);
+
+      for (pipe = 0; pipe < nbrOfPipes[line][andor]; pipe++) {
+        indexCommand = 0;
+        token = strtok(pipes[line][andor][pipe], delimiter);
+        while(token != NULL) {
+          commands[line][andor][pipe][indexCommand] = malloc(sizeof(token));
+          strcpy(commands[line][andor][pipe][indexCommand], token);
+          //printf("Line %d - AndOr %d - Pipe %d - Command %d : %s\n", line, andor, pipe, indexCommand, commands[line][andor][pipe][indexCommand]); //Afficher tout !
+          token = strtok(NULL, delimiter);
+          indexCommand++;
+        }
+        nbrOfCommands[line][andor][pipe] = indexCommand;
+      }
+    }
+  }
+
+}
+
 /*void execWithPriority(int commandIndex) {
   char *semiColon = commandAfterV(commandIndex);
 
@@ -306,8 +360,13 @@ int preprocessing(char *buffer) {
   execvp(commands[commandIndex][0], (char * const *)commands[commandIndex])
 }*/
 
-void run(int line) {
+void execAndOr(int line, int andor) {
+
+}
+
+void execSemicolon(int line) {
   pid_t pid;
+  int andor = 0;
 
   pid = fork();
   if(pid < 0){
@@ -318,39 +377,35 @@ void run(int line) {
   if (pid > 0) {
     WaitProcess(pid);
   } else {
-    execPipe(line);
+    for (andor = 0; andor < nbrOfAndOrs[line]; andor++) {
+      execAndOr(line, andor);
+    }
   }
 }
 
 int main(int argc, char *argv[]) {
-	displayUserPath();
-	while(1){
-	   if(!fgets(buffer,sizeof(buffer)-1,stdin)){
-	      printf("\n");
-        exit(0);
-   	 }
-     clearTab();
-     inputParser(buffer);
 
-     int line;
-     for(line = 0; line < nbrOfLines; line++) {
-       run(line);
-     }
+	if (!isatty(0)) {
+		while(fgets(buffer,sizeof(buffer)-1,stdin)!=NULL) {
+    	clearTab();
+    	inputParser(buffer);
+      //run();
+		}
+	} else {
+      displayUserPath();
+      while(1){
+        if(!fgets(buffer,sizeof(buffer)-1,stdin)){
+          if (argc>1) {
+            printf("\n");
+          }
+          exit(0);
+        }
 
-     /*if (strcmp(every_word[0],"") != 0) { //Si Non Entrée sans rien
-       if (strcmp(every_word[0],"cd") == 0) {
-         execCD();
-       }
-       else if (strcmp(every_word[0],"pwd") == 0) {
-         execPWD();
-       }
-       else if (strcmp(every_word[0],"exit") == 0) {
-         exit(0);
-       }
-       else {
-         runCommand(every_word[0],every_word);
-       }
-     }*/
-     displayUserPath();
+        clearTab();
+        inputParser(buffer);
+
+        //run();
+        displayUserPath();
+    }
   }
 }
