@@ -29,6 +29,7 @@ int checkSemicolon(char *buffer) {
     token = strtok(NULL, " ");
     i++;
   }
+
   nbrOfLines = semicolonIndex + 1;
   return semicolonIndex;
 }
@@ -80,8 +81,10 @@ void splitBySemicolon(char *buffer) {
 
   while(line != NULL) {
     offset = preprocessing(copyBuffer(line));
-    lines[i] = malloc(sizeof(line + offset));
-    strcpy(lines[i], line + offset);
+    lines[i] = malloc(MAX_INPUT_SIZE * sizeof(char));
+
+    strcpy(lines[i], (line + offset));
+
     line = strtok(NULL, ";");
     i++;
   }
@@ -95,7 +98,7 @@ void splitByAndOr(char *buffer, int line) {
 
   while(andor != NULL) {
     offset = preprocessing(copyBuffer(andor));
-    andors[line][i] = malloc(sizeof(andor + offset));
+    andors[line][i] = malloc(MAX_INPUT_SIZE * sizeof(char));
     strcpy(andors[line][i], andor + offset);
     andor = strtok(NULL, ANDORALIAS);
     i++;
@@ -108,7 +111,7 @@ void splitByPipe(char *buffer, int line, int andor) {
 
   while(pipe != NULL) {
     offset = preprocessing(copyBuffer(pipe));
-    pipes[line][andor][i] = malloc(sizeof(pipe + offset));
+    pipes[line][andor][i] = malloc(MAX_INPUT_SIZE * sizeof(char));
     strcpy(pipes[line][andor][i], pipe + offset);
     pipe = strtok(NULL, "|");
     i++;
@@ -263,7 +266,7 @@ char** backgroundArray(char **array) {
 void affectAndOrAlias(int line) {
   char *buffer = copyBuffer(lines[line]);
   char *token = strtok(buffer, " ");
-  char *newLine = malloc(sizeof(lines[line]) + 2 * sizeof(char));
+  char *newLine = malloc(MAX_INPUT_SIZE * sizeof(char));
 
   while(token != NULL) {
     if ((strcmp(token, "||") == 0) || (strcmp(token, "&&") == 0)) {
@@ -276,7 +279,7 @@ void affectAndOrAlias(int line) {
   }
 
   lines[line] = NULL;
-  lines[line] = malloc(sizeof(newLine));
+  lines[line] = malloc(MAX_INPUT_SIZE * sizeof(char));
   strcpy(lines[line], newLine);
 }
 
@@ -463,11 +466,12 @@ int main(int argc, char *argv[]) {
     	inputParser(buffer);
       for (line = 0; line < nbrOfLines; line++) {
       	if (strcmp(commands[0][0][0][testCD],"cd")==0) {
-		execCD();
-	}
+		      execCD();
+	      }
         execSemicolon(line);
       }
 		}
+
 	} else {
       displayUserPath();
       while(1){
@@ -480,10 +484,11 @@ int main(int argc, char *argv[]) {
 
         clearTab();
         inputParser(buffer);
+
         for (line = 0; line < nbrOfLines; line++) {
         	if (strcmp(commands[testCD][0][0][0],"cd")==0) {
-				execCD();
-	}
+				        execCD();
+	        }
           execSemicolon(line);
         }
         displayUserPath();
